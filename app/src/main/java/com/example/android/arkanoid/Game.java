@@ -14,6 +14,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.DisplayMetrics;
+import android.content.pm.ActivityInfo;
+import android.app.Activity;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -21,7 +24,7 @@ import android.view.View;
 import android.view.WindowManager;
 
 import java.util.ArrayList;
-
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 public class Game extends View implements SensorEventListener, View.OnTouchListener {
 
     private Bitmap sfondo;
@@ -29,6 +32,8 @@ public class Game extends View implements SensorEventListener, View.OnTouchListe
     private Bitmap allungato;
     private Bitmap paddle_p;
 
+    private SensorManager sManager;
+    private Sensor accelerometer;
     private Display display;
     private Point size;
     private Paint paint;
@@ -50,7 +55,28 @@ public class Game extends View implements SensorEventListener, View.OnTouchListe
     private boolean newRecord;
     private Context context;
 
-    public Game(Context context, int lifes, int score) {
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        if (this.controller == 0){
+            switch(event.getAction()){
+                case MotionEvent.ACTION_DOWN:
+                    if(context.getResources().getConfiguration().orientation == ORIENTATION_PORTRAIT){
+                        if((event.getRawX() > (size.x / 2)) && ((paddle.getX() + size.x / 12) < size.x - 200))
+                        {
+
+                            paddle.setX(paddle.getX() + (size.x / 12));
+                        }else if((event.getRawX() < (size.x / 2)) && ((paddle.getX() - (size.x / 12)) > 0)) {
+                            paddle.setX(paddle.getX() - (size.x / 12 ));
+                        }
+                    }
+
+            }
+        }
+        return super.onTouchEvent(event);
+    }
+
+    public Game(Context context, int lifes, int score, int controller) {
         super(context);
         paint = new Paint();
 
@@ -66,10 +92,11 @@ public class Game extends View implements SensorEventListener, View.OnTouchListe
         gameOver = false;
         newRecord = false;
 
-        // vytvorí akcelerometer a SensorManager
-        //crea un accelerometro e un SensorManager
-        sManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        accelerometer = sManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        //Il giocatore sceglie quale controller utilizzare
+        if(controller == 1){
+            sManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+            accelerometer = sManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
 
         leggiSfondo(context);
 
@@ -81,7 +108,7 @@ public class Game extends View implements SensorEventListener, View.OnTouchListe
         // vytvorí novú lopticku, pádlo, a zoznam tehliciek
         //crea una nuova palla, pagaia e un elenco di mattoncini
         palla = new Ball(size.x / 2, size.y - 480);
-        paddle = new Paddle(size.x / 2, size.y - 400);
+        paddle = new Paddle(size.x / 2 - 100, size.y - 400);
         mattoncini = new ArrayList<Brick>();
 
         generaMattoncini(context);
@@ -300,7 +327,9 @@ public class Game extends View implements SensorEventListener, View.OnTouchListe
 
     //spustiSnimanie = eseguire scansione
     public void iniziaSparare() {
-        sManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+        if(sManager != null) {
+            sManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+        }
     }
 
     // cambia accelerometro

@@ -6,13 +6,16 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 
 public class MainActivity extends AppCompatActivity {
 
     private Game game;
     private UpdateThread myThread;
     private Handler updateHandler;
-
+    private int selectedController;
+    String[] controllers = {"Touch", "Accelerometro"};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,8 +23,18 @@ public class MainActivity extends AppCompatActivity {
         // imposta l'orientamento dello schermo
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Scegli come Controllare il Paddle");
+        builder.setItems(controllers, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                selectedController = which;
+            }
+        });
+        builder.show();
         // crea un nuovo gioco
-        game = new Game(this, 3, 0);
+        game = new Game(this, 3, 0, selectedController);
         setContentView(game);
 
         // vytvori handler a thread
